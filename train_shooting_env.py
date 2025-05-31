@@ -1,27 +1,34 @@
-
 import gymnasium as gym
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.tune.registry import register_env
-import numpy as np
 from shooting_env import SimpleShootingEnv
+from tqdm import tqdm
 
+# Register custom environment
 def env_creator(env_config):
     return SimpleShootingEnv(discrete_action=True, num_angles=16, set_ManualMode=False)
 
 register_env("SimpleShooting-v0", env_creator)
 
+# Configure PPO
 config = (
     PPOConfig()
     .environment(env="SimpleShooting-v0")
     .framework("torch")
-    .rollouts(num_rollout_workers=1)
-    .training(train_batch_size=2000, model={"fcnet_hiddens": [128, 128]})
+    .env_runners(
+        num_env_runners=1,
+        rollout_fragment_length=200
+    )
+    .rl_module(model_config={"fcnet_hiddens": [128, 128]})
+    .training(train_batch_size=20000)
 )
 
+# Build the algorithm
 algo = config.build()
 
-for i in range(10):  # Train for 10 iterations
+# Training loop
+for i in tqdm(range(100)):
     result = algo.train()
-    print(f"Iteration {i}: reward={{result['episode_reward_mean']}}")
 
-algo.save("ppo_simple_shooting")
+# Save model
+algo.save("/root/simple-shooting-env/ppo_simple_shooting")
