@@ -21,13 +21,14 @@ config = (
     )
     .rl_module(model_config={"fcnet_hiddens": [128, 128]})
     .training(train_batch_size=20000)
+    .resources(num_gpus=1)
 )
 
 # Build the algorithm
 algo = config.build()
 
 # Training loop
-for i in tqdm(range(100)):
+for i in tqdm(range(5000)):
     result = algo.train()
 
 # Save model
